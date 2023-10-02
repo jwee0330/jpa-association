@@ -3,7 +3,9 @@ package persistence.dialect.type;
 public enum JavaToH2Type {
     LONG("bigint"),
     STRING("varchar"),
-    INTEGER("int");
+    INTEGER("int"),
+    ARRAY("bigint")
+    ;
 
     private final String dbType;
 

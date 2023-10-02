@@ -1,5 +1,6 @@
 package persistence.dialect;
 
+import java.util.List;
 import java.util.Map;
 import persistence.dialect.type.JavaToH2Type;
 
@@ -7,7 +8,8 @@ public class H2DbDialect implements Dialect {
     private static final Map<Class<?>, JavaToH2Type> JAVA_TO_H2_TYPE_MAP = Map.of(
             Long.class, JavaToH2Type.LONG,
             String.class, JavaToH2Type.STRING,
-            Integer.class, JavaToH2Type.INTEGER
+            Integer.class, JavaToH2Type.INTEGER,
+            List.class, JavaToH2Type.ARRAY
     );
 
     @Override

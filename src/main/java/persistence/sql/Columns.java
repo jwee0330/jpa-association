@@ -1,5 +1,6 @@
 package persistence.sql;
 
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
 import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
@@ -20,17 +21,29 @@ public class Columns extends AbstractColumns {
         for (Field field : instance.getClass().getDeclaredFields()) {
             if (addable(field)) {
                 field.setAccessible(true);
-                try {
-                    columnValues.put(field.getName(), field.get(instance));
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
+                putColumnValue(field, instance);
             }
+        }
+    }
+
+    public void addValue(Field field, Object instance) {
+        if (addable(field)) {
+            field.setAccessible(true);
+            putColumnValue(field, instance);
+        }
+        super.addColumn(field);
+    }
+
+    private void putColumnValue(Field field, Object instance) {
+        try {
+            columnValues.put(field.getName(), field.get(instance));
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
         }
     }
     @Override
     protected boolean addable(Field field) {
-        return !field.isAnnotationPresent(Transient.class);
+        return !field.isAnnotationPresent(Transient.class) && !field.isAnnotationPresent(OneToMany.class);
     }
 
     public Map<String, Object> getColumnValues() {

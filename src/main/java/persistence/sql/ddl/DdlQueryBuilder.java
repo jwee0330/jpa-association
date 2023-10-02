@@ -3,6 +3,7 @@ package persistence.sql.ddl;
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Map;
 import persistence.dialect.collection.IdGeneratedValueStrategyMap;
 import persistence.sql.QueryBuilder;
@@ -18,23 +19,44 @@ public class DdlQueryBuilder extends QueryBuilder {
         this.javaToSqlColumnParser = javaToSqlColumnParser;
     }
 
-    public String createTable() {
+    public Class<?> getClazz() {
+        return super.clazz;
+    }
+
+    public String createTable(Map<String, List<Map<String, Field>>> mappedFieldByTable) {
         final String tableName = getTableName();
-        String allColumns = addColumns(columns.getColumns()) + addConstraint();
+
+        final List<Map<String, Field>> mappedFields = mappedFieldByTable.get(tableName);
+        if (mappedFields != null) {
+            for (Map<String, Field> mappedField : mappedFields) {
+                mappedField.forEach(columns::addColumn);
+            }
+        }
+        String allColumns = addColumns(columns.getColumns()) + addConstraint(mappedFields);
         return String.format(CREATE_TABLE, tableName, allColumns);
     }
 
     public String dropTable() {
         final String tableName = getTableName();
-        return String.format("drop table %s;", tableName);
+        return String.format("drop table if exists %s;", tableName);
     }
 
-    private String addConstraint() {
-        return " constraint pk_" +
+    private String addConstraint(List<Map<String, Field>> mappedFields) {
+        StringBuilder constraint = new StringBuilder();
+        if (mappedFields != null) {
+            for (Map<String, Field> mappedField : mappedFields) {
+                mappedField.forEach((k, v) -> {
+                    constraint.append("constraint fk_" + getTableName() + "_" + k.toLowerCase() +
+                            " foreign key (" + k.toLowerCase() + ") references orders (id),");
+                });
+            }
+        }
+        constraint.append(" constraint pk_" +
                 getTableName().toLowerCase() +
                 " primary key (" +
                 id.getName() +
-                ")";
+                ")");
+        return constraint.toString();
     }
 
     private String addColumns(Map<String, Field> columns) {

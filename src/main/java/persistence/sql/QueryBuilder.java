@@ -19,7 +19,7 @@ public abstract class QueryBuilder {
         this.columns = new Columns(clazz);
     }
 
-    protected String getTableName() {
+    public String getTableName() {
         return EntityUtils.getName(clazz);
     }
 
