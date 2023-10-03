@@ -18,6 +18,9 @@ public class OrderItem {
 
     private Integer quantity;
 
+    protected OrderItem() {
+    }
+
     public OrderItem(Long id, String product, Integer quantity) {
         this.id = id;
         this.product = product;
@@ -29,5 +32,14 @@ public class OrderItem {
             throw new IllegalArgumentException();
         }
         return String.format("INSERT INTO order_items (id, product, quantity, order_id) VALUES (%d, '%s', %d, %d);", id, product, quantity, orderId);
+    }
+
+    @Override
+    public String toString() {
+        return "OrderItem{" +
+                "id=" + id +
+                ", product='" + product + '\'' +
+                ", quantity=" + quantity +
+                '}';
     }
 }

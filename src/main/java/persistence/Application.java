@@ -10,9 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import persistence.config.InitSchema;
 import persistence.config.PersistenceConfiguration;
-import persistence.dialect.H2DbDialect;
-import persistence.sql.ddl.DdlQueryBuilder;
-import persistence.sql.ddl.JavaToSqlColumnParser;
+import persistence.entity.EntityManager;
 
 public class Application {
     private static final Logger logger = LoggerFactory.getLogger(Application.class);
@@ -24,21 +22,30 @@ public class Application {
             server.start();
 
             final JdbcTemplate jdbcTemplate = new JdbcTemplate(server.getConnection());
-            JavaToSqlColumnParser javaToSqlColumnParser = new JavaToSqlColumnParser(new H2DbDialect());
-            List<DdlQueryBuilder> ddlQueryBuilders = List.of(
-                    new DdlQueryBuilder(javaToSqlColumnParser, Order.class),
-                    new DdlQueryBuilder(javaToSqlColumnParser, OrderItem.class)
+            PersistenceConfiguration persistenceConfiguration = new PersistenceConfiguration(
+                    List.of(Order.class, OrderItem.class),
+                    jdbcTemplate,
+                    InitSchema.DROP_AND_CREATE
             );
-            new PersistenceConfiguration(ddlQueryBuilders, jdbcTemplate, InitSchema.DROP_AND_CREATE).initiateDatabase();
+            persistenceConfiguration.initiateDatabase();
 
             Order order = new Order(1L, "1000")
                     .addOrderItem(new OrderItem(1L, "item1", 5))
                     .addOrderItem(new OrderItem(2L, "item2", 3))
                     .addOrderItem(new OrderItem(3L, "item3", 10));
-
             jdbcTemplate.execute(order.convertToInsertQuery());
 
-//            server.stop();
+            EntityManager entityManager = persistenceConfiguration.getEntityManager();
+            Order result = entityManager.find(Order.class, 1L);
+            System.out.println(result);
+
+            if (result.getOrderItems().size() == 3) {
+                logger.info("OrderItem is loaded successfully");
+            } else {
+                logger.error("OrderItem is not loaded");
+            }
+
+            server.stop();
         } catch (Exception e) {
             logger.error("Error occurred", e);
         } finally {

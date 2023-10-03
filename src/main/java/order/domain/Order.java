@@ -57,4 +57,13 @@ public class Order {
                 .forEach(query::append);
         return query.toString();
     }
+
+    @Override
+    public String toString() {
+        return "Order{" +
+                "id=" + id +
+                ", orderNumber='" + orderNumber + '\'' +
+                ", orderItems=" + orderItems +
+                '}';
+    }
 }

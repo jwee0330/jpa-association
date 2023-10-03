@@ -10,19 +10,34 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import jdbc.JdbcTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import persistence.dialect.H2DbDialect;
+import persistence.entity.EntityManager;
+import persistence.entity.EntityPersister;
+import persistence.entity.MyEntityManager;
+import persistence.entity.MyEntityPersister;
 import persistence.sql.ddl.DdlQueryBuilder;
+import persistence.sql.ddl.JavaToSqlColumnParser;
 
 public class PersistenceConfiguration {
+    private static final Logger logger = LoggerFactory.getLogger(PersistenceConfiguration.class);
+    private final JavaToSqlColumnParser javaToSqlColumnParser;
     private final List<DdlQueryBuilder> ddlQueryBuilders;
     private final JdbcTemplate jdbcTemplate;
     private final InitSchema initSchema;
     private final Map<String, List<Map<String, Field>>> mappedFieldByTable;
+    private final EntityPersister entityPersister;
+    private final EntityManager entityManager;
 
-    public PersistenceConfiguration(List<DdlQueryBuilder> ddlQueryBuilders, JdbcTemplate jdbcTemplate, InitSchema initSchema) {
-        this.ddlQueryBuilders = ddlQueryBuilders;
+    public PersistenceConfiguration(List<Class<?>> classes, JdbcTemplate jdbcTemplate, InitSchema initSchema) {
+        this.javaToSqlColumnParser = new JavaToSqlColumnParser(new H2DbDialect());
+        this.ddlQueryBuilders = classes.stream().map(e -> new DdlQueryBuilder(javaToSqlColumnParser, e)).toList();
         this.jdbcTemplate = jdbcTemplate;
         this.initSchema = initSchema;
         this.mappedFieldByTable = new HashMap<>();
+        this.entityPersister = new MyEntityPersister(jdbcTemplate, classes);
+        this.entityManager = new MyEntityManager(entityPersister);
         initMappedFields(ddlQueryBuilders);
     }
 
@@ -41,11 +56,8 @@ public class PersistenceConfiguration {
                                 Type[] fieldArgTypes = parameterizedType.getActualTypeArguments();
                                 for (Type fieldArgType : fieldArgTypes) {
                                     Class<?> fieldArgClass = (Class<?>) fieldArgType;
-                                    System.out.println("Type: " + fieldArgClass.getName());
                                     if (fieldArgClass.isAnnotationPresent(Table.class)) {
                                         Table table = fieldArgClass.getAnnotation(Table.class);
-                                        String name = table.name();
-                                        System.out.println("table name: " + name);
                                         mappedFieldByTable.put(table.name(), List.of(Map.of(joinColumnName, declaredField)));
                                     }
                                 }
@@ -69,8 +81,12 @@ public class PersistenceConfiguration {
         }
         for (DdlQueryBuilder ddlQueryBuilder : ddlQueryBuilders) {
             String createTable = ddlQueryBuilder.createTable(mappedFieldByTable);
-            System.out.println(createTable);
+            logger.info(createTable);
             jdbcTemplate.execute(createTable);
         }
+    }
+
+    public EntityManager getEntityManager() {
+        return entityManager;
     }
 }

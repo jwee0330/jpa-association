@@ -1,6 +1,6 @@
 package persistence.entity;
 
-public interface EntityPersister {
+public interface EntityPersister extends EntityContract {
     /*
     스냅샷을 만들 때 Object 가 아니라 EntityPersister 라는 인터페이스를 활용해 엔티티가 영속화 될 때
     데이터베이스로 부터 데이터를 pesister.getDatabaseSnapshot 메서드를 통해 가져옴

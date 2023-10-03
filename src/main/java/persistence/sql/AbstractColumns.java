@@ -8,6 +8,7 @@ import static persistence.sql.EntityUtils.getColumnName;
 
 public abstract class AbstractColumns {
     protected final Map<String, Field> columns = new LinkedHashMap<>();
+    protected final Map<String, Field> allColumns = new LinkedHashMap<>();
 
     public AbstractColumns(Class<?> clazz) {
         for (Field field : clazz.getDeclaredFields()) {
@@ -16,6 +17,7 @@ public abstract class AbstractColumns {
     }
 
     public void addColumn(Field field) {
+        allColumns.put(getColumnName(field), field);
         if (addable(field)) {
             columns.put(getColumnName(field), field);
         }

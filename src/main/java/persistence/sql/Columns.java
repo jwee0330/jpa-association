@@ -5,6 +5,7 @@ import jakarta.persistence.Transient;
 import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Columns extends AbstractColumns {
 
@@ -50,4 +51,10 @@ public class Columns extends AbstractColumns {
         return new LinkedHashMap<>(columnValues);
     }
 
+    public Map<String, Field> getJoinColumns() {
+        return allColumns.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().isAnnotationPresent(OneToMany.class))
+                .collect(Collectors.toMap(entry -> EntityUtils.getColumnName(entry.getValue()), Map.Entry::getValue));
+    }
 }
