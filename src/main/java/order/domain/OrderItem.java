@@ -18,8 +18,16 @@ public class OrderItem {
 
     private Integer quantity;
 
-    public OrderItem(String product, Integer quantity) {
+    public OrderItem(Long id, String product, Integer quantity) {
+        this.id = id;
         this.product = product;
         this.quantity = quantity;
+    }
+
+    public String toInsertQuery(Long orderId) {
+        if (id == null || product == null || quantity == null || orderId == null) {
+            throw new IllegalArgumentException();
+        }
+        return String.format("INSERT INTO order_items (id, product, quantity, order_id) VALUES (%d, '%s', %d, %d);", id, product, quantity, orderId);
     }
 }

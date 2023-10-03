@@ -31,7 +31,14 @@ public class Application {
             );
             new PersistenceConfiguration(ddlQueryBuilders, jdbcTemplate, InitSchema.DROP_AND_CREATE).initiateDatabase();
 
-            server.stop();
+            Order order = new Order(1L, "1000")
+                    .addOrderItem(new OrderItem(1L, "item1", 5))
+                    .addOrderItem(new OrderItem(2L, "item2", 3))
+                    .addOrderItem(new OrderItem(3L, "item3", 10));
+
+            jdbcTemplate.execute(order.convertToInsertQuery());
+
+//            server.stop();
         } catch (Exception e) {
             logger.error("Error occurred", e);
         } finally {

@@ -1,6 +1,7 @@
 package order.domain;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -20,13 +21,18 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "order_number")
     private String orderNumber;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "order_id")
     private List<OrderItem> orderItems;
 
-    public Order(String orderNumber) {
+    protected Order() {
+    }
+
+    public Order(Long id, String orderNumber) {
+        this.id = id;
         this.orderNumber = orderNumber;
         this.orderItems = new ArrayList<>();
     }
@@ -38,5 +44,17 @@ public class Order {
 
     public List<OrderItem> getOrderItems() {
         return orderItems;
+    }
+
+    public String convertToInsertQuery() {
+        if (id == null || orderNumber == null) {
+            throw new IllegalArgumentException();
+        }
+        StringBuilder query = new StringBuilder();
+        query.append(String.format("INSERT INTO orders (id, order_number) VALUES (%d, '%s');", id, orderNumber));
+        orderItems.stream()
+                .map(e -> e.toInsertQuery(id))
+                .forEach(query::append);
+        return query.toString();
     }
 }
